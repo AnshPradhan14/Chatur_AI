@@ -21,4 +21,4 @@ Thumbs.db
 *.log
 
 # Ignore environment files
-.env
+.envvenv/ 

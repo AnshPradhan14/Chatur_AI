@@ -1,7 +1,16 @@
 # Ignore virtual environments
 .env
+.environment
+.envvenv
 venv/
-env/
+__pycache__/
+*.pyc
+*.pyd
+*.dll
+*.lib
+*.so
+*.bin
+*.exe
 # Ignore Python cache files
 __pycache__/
 *.py[cod]

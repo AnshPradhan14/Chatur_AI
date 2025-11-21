@@ -146,6 +146,7 @@ Also includes login/register pages:
 ## 🗄️ Database Schema (MongoDB)
 
 ### Users (`users`)
+```
 {
 name,
 email,
@@ -153,22 +154,29 @@ password_hash,
 created_at
 }
 
+```
+
 ### Chats (`chats`)
+```
 {
 user_id,
 title,
 created_at
 }
+```
 
 ### Messages (`messages`)
+```
 {
 chat_id,
 role: "user" | "assistant",
 content,
 timestamp
 }
+```
 
 ### Documents (`documents`)
+```
 {
 user_id,
 chat_id,
@@ -176,14 +184,17 @@ title,
 doc_type,
 chunk_count
 }
+```
 
 ### Embeddings (`embeddings`)
+```
 {
 doc_id,
 chat_id,
 chunk_text,
 embedding[]
 }
+```
 
 ---
 

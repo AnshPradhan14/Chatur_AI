@@ -1,4 +1,4 @@
-# Chatur AI – Intelligent RAG-Based Study Assistant
+# Chatur AI – Intelligent RAG Study Companion
 
 A full-stack **AI-powered learning assistant** built using **FastAPI**, **Groq LLMs**, **MongoDB Vector Search**, and a modern **TailwindCSS frontend**.  
 Chatur AI analyzes PDFs, URLs, and Notes, generates contextual answers, summaries, flashcards, quizzes, and maintains full conversation memory per chat.

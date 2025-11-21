@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Chatur AI</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/showdown@2.1.0/dist/showdown.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  body { font-family: 'Inter', sans-serif; background-color: #ffffff; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  
+  /* Markdown Styling */
+  .markdown ul { list-style-type: disc; margin-left: 1.2rem; margin-bottom: 0.8rem; }
+  .markdown ol { list-style-type: decimal; margin-left: 1.2rem; margin-bottom: 0.8rem; }
+  .markdown p { margin-bottom: 0.6rem; line-height: 1.7; }
+  .markdown h1, .markdown h2, .markdown h3 { font-weight: 700; color: #1e293b; margin-top: 1.2rem; margin-bottom: 0.6rem; }
+  .markdown strong { color: #0f172a; font-weight: 700; }
+  .markdown blockquote { border-left: 3px solid #6366f1; padding-left: 1rem; color: #475569; background: #f8fafc; padding-top:0.5rem; padding-bottom:0.5rem; border-radius: 0 0.5rem 0.5rem 0; }
+  
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  
+  @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+  .animate-float { animation: float 4s ease-in-out infinite; }
+
+  /* Mode Toggle */
+  .mode-btn { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+  .mode-btn.active { background-color: #f1f5f9; color: #4f46e5; border-color: #e2e8f0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+  .mode-btn.inactive { background-color: transparent; color: #94a3b8; border-color: transparent; }
+</style>
+</head>
+<body class="h-screen flex overflow-hidden text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
+
+    <aside class="w-80 bg-slate-50/50 border-r border-slate-200 flex flex-col hidden md:flex z-20 backdrop-blur-xl">
+        <div class="p-6 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <i class="fas fa-brain text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-slate-900 text-xl tracking-tight">Chatur AI</h1>
+                </div>
+            </div>
+            <button onclick="createNewChat()" class="w-9 h-9 rounded-full text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center" title="New Chat">
+                <i class="fas fa-edit text-lg"></i>
+            </button>
+        </div>
+        
+        <div class="flex-1 flex flex-col overflow-hidden px-4">
+            <div class="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-3">History</div>
+            <div id="chat-list" class="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-hide pb-4">
+                <div class="text-center text-slate-400 text-sm mt-10 animate-pulse">Loading...</div>
+            </div>
+        </div>
+    
+        <div class="p-4 border-t border-slate-100">
+            <div class="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-default group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg font-bold border border-indigo-100">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <span id="user-display" class="text-sm font-bold text-slate-800 truncate max-w-[120px] leading-tight">Student</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="relative flex h-2 w-2">
+                              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                            <span class="text-[11px] font-semibold text-emerald-600 tracking-wide">Online</span>
+                        </div>
+                    </div>
+                </div>
+    
+                <button onclick="logout()" class="text-slate-300 hover:text-rose-500 hover:bg-rose-50 w-8 h-8 rounded-lg flex items-center justify-center transition-all" title="Log Out">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+  <main class="flex-1 flex flex-col relative bg-white">
+    <header class="md:hidden bg-white/90 backdrop-blur-md p-4 border-b flex justify-between items-center z-20 sticky top-0">
+        <span class="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+            <span class="text-indigo-600"><i class="fas fa-brain"></i></span> Chatur AI
+        </span>
+        <button onclick="logout()" class="text-slate-400"><i class="fas fa-sign-out-alt"></i></button>
+    </header>
+
+    <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 scrollbar-hide relative">
+        <div id="welcome-screen" class="hidden h-full flex flex-col items-center justify-center text-center p-4 opacity-0 transition-opacity duration-700">
+            <div class="animate-float mb-6">
+                <div class="w-24 h-24 bg-gradient-to-tr from-indigo-500 to-purple-500 text-white rounded-[2rem] flex items-center justify-center text-5xl shadow-2xl shadow-indigo-200">
+                    <i class="fas fa-sparkles"></i>
+                </div>
+            </div>
+            <h3 class="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Hello, Scholar.</h3>
+            <p class="text-slate-500 text-base mb-12 max-w-md">Ready to learn? Upload your materials and let's begin.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-3xl w-full">
+                <button onclick="document.getElementById('pdf-upload').click()" class="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all group text-left">
+                    <div class="w-10 h-10 bg-white text-rose-500 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition border border-slate-100">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mb-1">Upload PDF</h4>
+                    <p class="text-xs text-slate-400">Analyze documents.</p>
+                </button>
+                <button onclick="openTextModal()" class="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all group text-left">
+                    <div class="w-10 h-10 bg-white text-blue-500 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition border border-slate-100">
+                        <i class="fas fa-align-left"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mb-1">Paste Text</h4>
+                    <p class="text-xs text-slate-400">Process raw notes.</p>
+                </button>
+                <button onclick="openUrlModal()" class="bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:border-indigo-200 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all group text-left">
+                    <div class="w-10 h-10 bg-white text-emerald-500 rounded-xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition border border-slate-100">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 mb-1">Add Link</h4>
+                    <p class="text-xs text-slate-400">Learn from web.</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-4 pb-6 bg-white z-30">
+        <div class="max-w-4xl mx-auto w-full bg-white border border-slate-200 rounded-[2rem] shadow-2xl shadow-slate-200/50 p-2 pl-4 flex flex-col gap-2">
+            
+            <div class="flex items-center gap-1">
+    
+                <div class="relative">
+                    <button id="add-btn" onclick="toggleAddMenu()" class="text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-full transition-all text-sm font-medium flex items-center gap-1">
+                        <i class="fas fa-plus-circle"></i> Add Content
+                    </button>
+                    
+                    <div id="add-menu" class="absolute bottom-full left-0 mb-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl hidden overflow-hidden z-50 animate-fade-in p-1">
+                        <label class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl cursor-pointer transition-colors">
+                            <span class="text-rose-500"><i class="fas fa-file-pdf"></i></span>
+                            <span class="text-xs font-semibold text-slate-700">Upload PDF</span>
+                            <input type="file" id="pdf-upload" accept=".pdf" class="hidden" onchange="uploadFile('pdf', this); toggleAddMenu()">
+                        </label>
+                        <button onclick="openTextModal(); toggleAddMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl text-left transition-colors">
+                            <span class="text-blue-500"><i class="fas fa-paragraph"></i></span>
+                            <span class="text-xs font-semibold text-slate-700">Paste Text</span>
+                        </button>
+                        <button onclick="openUrlModal(); toggleAddMenu()" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 rounded-xl text-left transition-colors">
+                            <span class="text-emerald-500"><i class="fas fa-globe"></i></span>
+                            <span class="text-xs font-semibold text-slate-700">Web URL</span>
+                        </button>
+                    </div>
+                </div>
+            
+                <div class="bg-slate-100 p-1 rounded-full flex ml-2">
+                   <button id="mode-hybrid" onclick="setMode('hybrid')" class="mode-btn active px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">Hybrid</button>
+                   <button id="mode-strict" onclick="setMode('strict')" class="mode-btn inactive px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">Strict</button>
+                </div>
+            </div>
+
+            <div class="flex items-end gap-2">
+                <textarea 
+                    id="msg-input" 
+                    rows="1" 
+                    class="flex-1 max-h-48 bg-transparent border-none outline-none focus:outline-none focus:ring-0 shadow-none text-slate-800 placeholder-slate-400 text-sm resize-none py-3 px-3 overflow-hidden" 
+                    placeholder="Ask anything about your documents..." 
+                    oninput="autoResize(this)"
+                    onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(); }">
+                </textarea>
+                
+                <div class="flex gap-1 pb-1 pr-1">
+                    <button onclick="runTool('/api/summarize', '📝 Summary')" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-indigo-50 text-slate-400 hover:text-indigo-600 transition flex items-center justify-center" title="Summary">
+                        <i class="fas fa-highlighter text-xs"></i>
+                    </button>
+                    <button onclick="generateQuiz()" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-orange-50 text-slate-400 hover:text-orange-500 transition flex items-center justify-center" title="Quiz">
+                        <i class="fas fa-graduation-cap text-xs"></i>
+                    </button>
+                    <button onclick="generateFlashcards()" class="w-8 h-8 rounded-full bg-slate-50 hover:bg-emerald-50 text-slate-400 hover:text-emerald-500 transition flex items-center justify-center" title="Flashcards">
+                        <i class="fas fa-layer-group text-xs"></i>
+                    </button>
+                    <button onclick="sendMessage()" class="ml-2 w-10 h-10 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 hover:scale-105 transition shadow-lg shadow-indigo-200 flex items-center justify-center">
+                        <i class="fas fa-arrow-up"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <p class="text-[10px] text-slate-300 font-medium">AI can make mistakes. Double check important info.</p>
+        </div>
+    </div>
+  </main>
+
+  <div id="text-modal" class="fixed inset-0 bg-slate-900/20 hidden flex items-center justify-center z-50 backdrop-blur-sm transition-all">
+    <div class="bg-white p-0 rounded-3xl w-[36rem] shadow-2xl animate-fade-in overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-paste text-indigo-500"></i> Paste Notes</h3>
+            <button onclick="document.getElementById('text-modal').classList.add('hidden')" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 transition"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-5">
+            <textarea id="raw-text-input" class="w-full border border-slate-200 bg-slate-50 p-4 h-64 text-sm rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:outline-none resize-none leading-relaxed" placeholder="Paste your lecture notes here..."></textarea>
+            <div class="flex justify-end gap-3 mt-5">
+                <button onclick="uploadText()" class="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Save Notes</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="url-modal" class="fixed inset-0 bg-slate-900/20 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white p-0 rounded-3xl w-[30rem] shadow-2xl animate-fade-in overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-globe text-emerald-500"></i> Add Link</h3>
+            <button onclick="document.getElementById('url-modal').classList.add('hidden')" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 transition"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="p-6">
+            <div class="relative">
+                <i class="fas fa-link absolute left-4 top-3.5 text-slate-400"></i>
+                <input id="url-input" type="text" class="w-full border border-slate-200 bg-slate-50 p-3 pl-10 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none" placeholder="https://example.com/article">
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="uploadUrl()" class="bg-emerald-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-200">Scrape</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div id="result-modal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 backdrop-blur-md p-4">
+    <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 backdrop-blur-md">
+            <h3 id="res-title" class="text-lg font-bold text-slate-800">Result</h3>
+            <button onclick="closeModal()" class="w-8 h-8 rounded-full hover:bg-slate-100 text-slate-400 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="res-content" class="p-8 overflow-y-auto scrollbar-hide flex-1 bg-white"></div>
+    </div>
+  </div>
+
+<div id="loader" class="fixed inset-0 bg-white/90 backdrop-blur-md z-[100] hidden flex-col items-center justify-center">
+    <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-4 relative">
+         <div class="absolute w-full h-full border-4 border-indigo-100 rounded-full"></div>
+         <div class="absolute w-full h-full border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
+         <i class="fas fa-brain text-indigo-600 text-xl"></i>
+    </div>
+    <div class="text-slate-800 font-bold text-lg">Thinking...</div>
+    <div id="loader-text" class="text-slate-400 text-sm mt-1">Processing your request</div>
+</div>
+
+<script>
+    // [Identical Logic to previous file, just keeping the JS intact]
+    const API_URL = "http://127.0.0.1:8000";
+    let CURRENT_CHAT_ID = null;
+    let CURRENT_MODE = "hybrid";
+    let CURRENT_QUIZ_DATA = []; 
+    
+    const token = localStorage.getItem('token');
+    const md = new showdown.Converter();
+    
+    if (!token) window.location.href = 'login.html';
+    document.getElementById('user-display').innerText = localStorage.getItem('user_name') || 'Student';
+    
+    window.onload = async () => { await loadChatHistory(); };
+
+    function showLoader(msg="Processing...") {
+        document.getElementById('loader-text').innerText = msg;
+        document.getElementById('loader').classList.remove('hidden');
+        document.getElementById('loader').classList.add('flex');
+    }
+    function hideLoader() {
+        document.getElementById('loader').classList.add('hidden');
+        document.getElementById('loader').classList.remove('flex');
+    }
+    // --- UI Logic: Toggle Add Menu ---
+    function toggleAddMenu() {
+        const menu = document.getElementById('add-menu');
+        if (menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+        } else {
+            menu.classList.add('hidden');
+        }
+    }
+    // Close menu when clicking anywhere else on the page
+    document.addEventListener('click', function(event) {
+        const menu = document.getElementById('add-menu');
+        const btn = document.getElementById('add-btn');
+        // If the click was NOT inside the menu AND NOT on the button
+        if (menu && !menu.classList.contains('hidden') && !menu.contains(event.target) && !btn.contains(event.target)) {
+            menu.classList.add('hidden');
+        }
+    });
+
+    function setMode(mode) {
+        CURRENT_MODE = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => {
+            b.classList.remove('active', 'bg-slate-100', 'text-indigo-600');
+            b.classList.add('inactive');
+        });
+        if(mode === 'hybrid') {
+            const btn = document.getElementById('mode-hybrid');
+            btn.classList.add('active');
+            btn.classList.remove('inactive');
+        } else {
+            const btn = document.getElementById('mode-strict');
+            btn.classList.add('active');
+            btn.classList.remove('inactive');
+        }
+    }
+
+    async function loadChatHistory() {
+        try {
+            const res = await fetch(`${API_URL}/chats/my`, { headers: {'Authorization': `Bearer ${token}`} });
+            if(res.status===401) logout();
+            const chats = await res.json();
+            const list = document.getElementById('chat-list');
+            list.innerHTML = '';
+
+            if (chats.length === 0) {
+                 document.getElementById('welcome-screen').classList.remove('hidden');
+                 setTimeout(() => document.getElementById('welcome-screen').classList.remove('opacity-0'), 50);
+                 return;
+            }
+
+            chats.forEach(chat => {
+                const div = document.createElement('div');
+                const isActive = chat._id === CURRENT_CHAT_ID;
+                
+                div.className = `group flex justify-between items-center p-3 rounded-xl cursor-pointer transition-all duration-200 mb-1 ${isActive ? 'bg-white shadow-sm border border-slate-100' : 'hover:bg-slate-100 border border-transparent'}`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden flex-1" onclick="loadChat('${chat._id}')">
+                        <div class="w-2 h-2 rounded-full ${isActive ? 'bg-indigo-500' : 'bg-slate-300 group-hover:bg-indigo-300'}"></div>
+                        <span class="${isActive ? 'font-bold text-slate-800' : 'text-slate-600 font-medium group-hover:text-slate-900'} truncate text-sm">${chat.title}</span>
+                    </div>
+                    <div class="hidden group-hover:flex gap-2">
+                         <button onclick="deleteChat('${chat._id}')" class="text-slate-300 hover:text-rose-500 transition"><i class="fas fa-times"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            if (!CURRENT_CHAT_ID && chats.length > 0) loadChat(chats[0]._id);
+        } catch (e) { console.error(e); }
+    }
+
+    async function createNewChat() {
+        const title = prompt("Chat Name:", "New Research");
+        if (!title) return;
+        try {
+            const res = await fetch(`${API_URL}/chats/create`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ title })
+            });
+            const data = await res.json();
+            CURRENT_CHAT_ID = data.chat_id;
+            await loadChatHistory();
+            loadChat(CURRENT_CHAT_ID);
+        } catch(e) {}
+    }
+
+    async function deleteChat(id) {
+        if(!confirm("Delete this chat?")) return;
+        await fetch(`${API_URL}/chats/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (CURRENT_CHAT_ID === id) { CURRENT_CHAT_ID = null; location.reload(); } 
+        else { loadChatHistory(); }
+    }
+
+    async function loadChat(id) {
+        CURRENT_CHAT_ID = id;
+        loadChatHistory(); 
+        const container = document.getElementById('chat-container');
+        if(document.getElementById('welcome-screen')) document.getElementById('welcome-screen').classList.add('hidden');
+
+        container.innerHTML = '';
+        const res = await fetch(`${API_URL}/chats/${id}/messages`, { headers: {'Authorization': `Bearer ${token}`} });
+        const msgs = await res.json();
+        
+        if(msgs.length === 0) {
+             container.innerHTML = `<div class="h-full flex flex-col items-center justify-center opacity-40"><i class="far fa-comment-dots text-4xl mb-2 text-slate-300"></i><p class="text-slate-400 text-sm">Start the conversation</p></div>`;
+        } else {
+            msgs.forEach(m => appendMsg(m.role, m.content));
+        }
+        scrollToBottom();
+    }
+
+    async function uploadFile(type, input) {
+        if(!CURRENT_CHAT_ID) return alert("Select a chat first");
+        const file = input.files[0];
+        if(!file) return;
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('chat_id', CURRENT_CHAT_ID);
+        showLoader("Reading PDF...");
+        try {
+            const res = await fetch(`${API_URL}/documents/upload/pdf`, { method: 'POST', headers: {'Authorization': `Bearer ${token}`}, body: fd });
+            if(res.ok) appendMsg('assistant', `✅ **Analyzed:** ${file.name}`);
+        } catch(e) { appendMsg('assistant', `❌ Failed to upload.`); } 
+        finally { hideLoader(); input.value = ''; }
+    }
+    
+    function openTextModal() { document.getElementById('text-modal').classList.remove('hidden'); }
+    function openUrlModal() { document.getElementById('url-modal').classList.remove('hidden'); }
+    
+    async function uploadText() {
+        const text = document.getElementById('raw-text-input').value;
+        if(!text || !CURRENT_CHAT_ID) return;
+        document.getElementById('text-modal').classList.add('hidden');
+        showLoader("Saving...");
+        await fetch(`${API_URL}/documents/upload/text`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+            body: JSON.stringify({ text, chat_id: CURRENT_CHAT_ID })
+        });
+        hideLoader();
+        appendMsg('assistant', `✅ **Note Saved.**`);
+        document.getElementById('raw-text-input').value = '';
+    }
+
+    async function uploadUrl() {
+        const url = document.getElementById('url-input').value;
+        if(!url || !CURRENT_CHAT_ID) return;
+        document.getElementById('url-modal').classList.add('hidden');
+        showLoader("Reading Link...");
+        appendMsg('user', `Reading: ${url}`);
+        await fetch(`${API_URL}/documents/upload/url`, {
+            method: 'POST', headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+            body: JSON.stringify({ url, chat_id: CURRENT_CHAT_ID })
+        });
+        hideLoader();
+        appendMsg('assistant', `✅ **Content learned from link.**`);
+        document.getElementById('url-input').value = '';
+    }
+    function autoResize(el) {
+        el.style.height = 'auto'; // Reset height to calculate scrollHeight correctly
+        el.style.height = el.scrollHeight + 'px'; // Set new height based on content
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if(!text || !CURRENT_CHAT_ID) return;
+        
+        appendMsg('user', text);
+        input.value = '';
+        input.style.height = 'auto'; 
+        
+        const c = document.getElementById('chat-container');
+        const typingDiv = document.createElement('div');
+        typingDiv.id = 'typing';
+        typingDiv.className = "flex justify-start animate-fade-in mb-6";
+        typingDiv.innerHTML = `
+            <div class="bg-white border border-slate-100 px-4 py-3 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></span>
+                <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                <span class="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+            </div>`;
+        c.appendChild(typingDiv);
+        scrollToBottom();
+
+        try {
+            const res = await fetch(`${API_URL}/chat`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ chat_id: CURRENT_CHAT_ID, query: text, mode: CURRENT_MODE })
+            });
+            const data = await res.json();
+            document.getElementById('typing').remove();
+            appendMsg('assistant', data.answer);
+        } catch(e) {
+            if(document.getElementById('typing')) document.getElementById('typing').remove();
+        }
+    }
+
+    function appendMsg(role, text) {
+        const c = document.getElementById('chat-container');
+        const div = document.createElement('div');
+        div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} mb-6 animate-fade-in`;
+        
+        const bub = document.createElement('div');
+        if(role === 'user') {
+            bub.className = "max-w-[85%] bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-md text-sm leading-relaxed font-medium";
+            bub.innerText = text; 
+        } else {
+            bub.className = "max-w-[90%] bg-white border border-slate-100 text-slate-700 px-6 py-4 rounded-2xl rounded-tl-none shadow-sm text-sm markdown prose prose-sm prose-indigo leading-7";
+            bub.innerHTML = md.makeHtml(text);
+        }
+        div.appendChild(bub);
+        c.appendChild(div);
+        scrollToBottom();
+    }
+
+    async function runTool(endpoint, title) {
+        if(!CURRENT_CHAT_ID) return alert("Select chat");
+        showLoader("Generating...");
+        const res = await fetch(`${API_URL}${endpoint}`, {
+            method: 'POST', headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`},
+            body: JSON.stringify({ chat_id: CURRENT_CHAT_ID })
+        });
+        const data = await res.json();
+        hideLoader();
+        if(endpoint.includes("summarize")) {
+            openModal(title, `<div class="markdown prose prose-sm max-w-none text-slate-700">${md.makeHtml(data.summary)}</div>`);
+        }
+    }
+
+    async function generateFlashcards() {
+        if(!CURRENT_CHAT_ID) return alert("Select chat");
+        showLoader("Creating Flashcards...");
+        const res = await fetch(`${API_URL}/api/flashcards`, {
+            method: 'POST', headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`},
+            body: JSON.stringify({ chat_id: CURRENT_CHAT_ID })
+        });
+        const data = await res.json();
+        hideLoader();
+        
+        const html = data.flashcards.map((c, i) => `
+            <div class="mb-4 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm group">
+                <button onclick="toggleCard(${i})" class="w-full text-left px-6 py-5 font-bold flex justify-between items-center bg-white text-slate-800 hover:bg-slate-50 transition">
+                    <span><span class="text-indigo-500 mr-2">Q.</span> ${c.front}</span>
+                    <i id="icon-${i}" class="fas fa-chevron-down text-slate-300"></i>
+                </button>
+                <div id="ans-${i}" class="hidden bg-indigo-50/30 px-6 py-5 border-t border-slate-100 text-slate-600 text-sm leading-relaxed">
+                    ${c.back}
+                </div>
+            </div>
+        `).join('');
+        openModal("Flashcards", html);
+    }
+
+    window.toggleCard = function(i) {
+        const ans = document.getElementById(`ans-${i}`);
+        if(ans.classList.contains('hidden')) ans.classList.remove('hidden');
+        else ans.classList.add('hidden');
+    }
+
+    async function generateQuiz() {
+        if(!CURRENT_CHAT_ID) return alert("Select chat");
+        let count = prompt("Number of questions?", "5");
+        if (!count) return;
+        
+        showLoader("Drafting Quiz...");
+        
+        try {
+            const res = await fetch(`${API_URL}/api/quiz`, {
+                method: 'POST', headers: {'Content-Type':'application/json', 'Authorization':`Bearer ${token}`},
+                body: JSON.stringify({ chat_id: CURRENT_CHAT_ID, question_count: parseInt(count) })
+            });
+            const data = await res.json();
+            hideLoader();
+            
+            CURRENT_QUIZ_DATA = data.quiz_questions;
+            
+            // 1. HIDDEN SCORE CARD (Appears after submit)
+            let html = `
+            <div id="quiz-result" class="hidden mb-8 bg-emerald-50 border border-emerald-100 rounded-3xl p-8 text-center animate-fade-in">
+                <div class="w-20 h-20 bg-white text-emerald-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-4 shadow-sm border border-emerald-100">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-emerald-900 mb-1">Quiz Complete!</h3>
+                <p class="text-emerald-600 font-medium mb-4">You scored</p>
+                <div class="text-6xl font-black text-emerald-600 tracking-tight">
+                    <span id="score-val">0</span><span class="text-3xl text-emerald-400 font-bold">/${CURRENT_QUIZ_DATA.length}</span>
+                </div>
+            </div>
+            
+            <div id="quiz-form" class="space-y-8">`;
+            
+            // 2. QUESTIONS LOOP
+            CURRENT_QUIZ_DATA.forEach((q, idx) => {
+                const opts = q.options.map(opt => `
+                    <label class="flex items-center gap-3 p-4 rounded-2xl border border-slate-200 bg-white cursor-pointer hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 hover:bg-indigo-50/30 transition-all group select-none">
+                        <div class="relative flex items-center">
+                            <input type="radio" name="q-${idx}" value="${opt}" class="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded-full checked:border-indigo-600 checked:bg-indigo-600 transition-all">
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">
+                                <div class="w-2 h-2 bg-white rounded-full"></div>
+                            </div>
+                        </div>
+                        <span class="text-sm text-slate-700 font-medium group-hover:text-indigo-900">${opt}</span>
+                    </label>
+                `).join('');
+
+                html += `
+                    <div class="bg-white" id="q-card-${idx}">
+                        <div class="flex gap-4 mb-4">
+                            <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-lg h-fit mt-0.5 shadow-sm">Q${idx+1}</span>
+                            <p class="font-bold text-slate-800 text-lg leading-snug">${q.question}</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-3 pl-0 md:pl-12">${opts}</div>
+                        <div id="feedback-${idx}" class="hidden mt-4 md:ml-12 p-4 rounded-2xl text-sm font-bold animate-fade-in"></div>
+                    </div>
+                    ${idx < CURRENT_QUIZ_DATA.length - 1 ? '<hr class="border-slate-100 my-6">' : ''}
+                `;
+            });
+            
+            html += `</div>
+            <div class="sticky bottom-0 bg-white/95 backdrop-blur-sm pt-6 pb-2 mt-6 border-t border-slate-100 z-10">
+                <button id="submit-btn" onclick="submitQuiz()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition transform active:scale-[0.98]">Submit Answers</button>
+            </div>`;
+            
+            openModal("🎓 Practice Quiz", html);
+            
+        } catch(e) {
+            hideLoader();
+            alert("Error generating quiz");
+        }
+    }
+
+    window.submitQuiz = function() {
+        let score = 0;
+        
+        CURRENT_QUIZ_DATA.forEach((q, idx) => {
+            const selected = document.querySelector(`input[name="q-${idx}"]:checked`);
+            const fb = document.getElementById(`feedback-${idx}`);
+            
+            // Show feedback div
+            fb.classList.remove('hidden');
+            
+            // Disable inputs so user can't change answer
+            document.querySelectorAll(`input[name="q-${idx}"]`).forEach(el => el.disabled = true);
+
+            if (selected && selected.value === q.answer) {
+                score++;
+                fb.className = "mt-4 md:ml-12 p-4 rounded-2xl text-sm font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 flex items-center gap-3 shadow-sm";
+                fb.innerHTML = `<div class="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-check text-xs"></i></div> Correct!`;
+            } else {
+                fb.className = "mt-4 md:ml-12 p-4 rounded-2xl text-sm font-medium bg-rose-50 text-rose-700 border border-rose-100 shadow-sm";
+                fb.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2 font-bold">
+                        <div class="w-6 h-6 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-times text-xs"></i></div> 
+                        Incorrect
+                    </div>
+                    <div class="text-slate-600 font-normal pl-9">Correct answer: <strong class="text-slate-900">${q.answer}</strong></div>
+                `;
+            }
+        });
+
+        // 1.Update Score Text
+        document.getElementById('score-val').innerText = score;
+        // 2.Show Score Card
+        document.getElementById('quiz-result').classList.remove('hidden');
+        // 3.Hide Submit Button
+        document.getElementById('submit-btn').style.display = 'none';
+        // 4.Smooth Scroll to Top to see the score
+        const contentArea = document.getElementById('res-content');
+        contentArea.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function openModal(title, content) {
+        document.getElementById('res-title').innerHTML = title;
+        document.getElementById('res-content').innerHTML = content;
+        document.getElementById('result-modal').classList.remove('hidden');
+    }
+    function closeModal() { document.getElementById('result-modal').classList.add('hidden'); }
+    function logout() { localStorage.clear(); window.location.href='login.html'; }
+    function scrollToBottom() { const c = document.getElementById('chat-container'); c.scrollTop = c.scrollHeight; }
+</script>
+</body>
+</html>

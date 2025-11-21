@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - Chatur AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .animate-gradient {
+            background: linear-gradient(-45deg, #4f46e5, #ec4899, #8b5cf6, #06b6d4);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="animate-gradient h-screen flex items-center justify-center p-4">
+    <div class="glass p-10 rounded-3xl shadow-2xl w-full max-w-md transform transition-all hover:scale-[1.01] duration-500">
+        <div class="text-center mb-8">
+             <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/30 mb-4">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">Join Chatur AI</h2>
+            <p class="text-slate-500 text-sm mt-2">Create your study companion.</p>
+        </div>
+        
+        <form id="registerForm" class="space-y-5">
+            <div class="group">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1 ml-1 group-focus-within:text-indigo-600 transition-colors">Full Name</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-3.5 text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                    <input type="text" id="name" required class="w-full py-3 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm" placeholder="John Doe">
+                </div>
+            </div>
+            <div class="group">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1 ml-1 group-focus-within:text-indigo-600 transition-colors">Email Address</label>
+                <div class="relative">
+                    <i class="fas fa-envelope absolute left-4 top-3.5 text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                    <input type="email" id="email" required class="w-full py-3 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm" placeholder="you@example.com">
+                </div>
+            </div>
+            <div class="group">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1 ml-1 group-focus-within:text-indigo-600 transition-colors">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-3.5 text-slate-300 group-focus-within:text-indigo-500 transition-colors"></i>
+                    <input type="password" id="password" required class="w-full py-3 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm" placeholder="••••••••">
+                </div>
+            </div>
+            
+            <button type="submit" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/50 hover:-translate-y-0.5 transition-all duration-300">
+                Create Account
+            </button>
+        </form>
+        
+        <div id="msg" class="mt-6 text-center text-sm hidden font-medium p-2 rounded-lg"></div>
+        
+        <p class="mt-8 text-center text-sm text-slate-500">
+            Already have an account? <a href="login.html" class="text-indigo-600 font-bold hover:text-indigo-800 hover:underline transition">Sign In</a>
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const msg = document.getElementById('msg');
+            
+            // Loading State
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> creating...';
+            
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const res = await fetch('http://127.0.0.1:8000/auth/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    msg.className = "mt-6 text-center text-sm text-emerald-600 bg-emerald-50 p-3 rounded-xl border border-emerald-100";
+                    msg.innerHTML = '<i class="fas fa-check-circle"></i> Account Created! Redirecting...';
+                    msg.classList.remove('hidden');
+                    setTimeout(() => window.location.href = 'login.html', 1500);
+                } else {
+                    throw new Error(data.detail || "Registration failed");
+                }
+            } catch (err) {
+                msg.className = "mt-6 text-center text-sm text-rose-600 bg-rose-50 p-3 rounded-xl border border-rose-100";
+                msg.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${err.message}`;
+                msg.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+    </script>
+</body>
+</html>

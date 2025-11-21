@@ -1,24 +1,17 @@
-.streamlit/secrets.toml 
-
 # Ignore virtual environments
+.env
 venv/
 env/
-
 # Ignore Python cache files
 __pycache__/
 *.py[cod]
-
 # Ignore Jupyter Notebook checkpoints
 .ipynb_checkpoints/
-
 # Ignore macOS system files
 .DS_Store
-
 # Ignore Windows system files
 Thumbs.db
-
 # Ignore logs
 *.log
-
 # Ignore environment files
-.envvenv/ 
+.envvenv/

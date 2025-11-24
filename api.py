@@ -422,7 +422,7 @@ def chat_endpoint(payload: ChatRequest, user: dict = Depends(get_current_user)):
                     "queryVector": query_vector,
                     "path": "embedding",
                     "numCandidates": 50,
-                    "limit": 6, # Fetch top 6 chunks
+                    "limit": 6, # Fetch top 20 chunks to avoid context fragmentation
                     "index": "vector_index",
                     "filter": {"chat_id": chat_id}
                 }
@@ -445,12 +445,19 @@ def chat_endpoint(payload: ChatRequest, user: dict = Depends(get_current_user)):
         # In Hybrid mode, we continue. In Strict mode, this is critical.
 
     # 4. Retrieve Conversation History (Last 6 messages)
-    history_cursor = messages_col.find({"chat_id": chat_id}).sort("timestamp", -1).limit(6)
+    history_cursor = messages_col.find({"chat_id": chat_id}).sort("timestamp", -1).limit(6) 
     history_msgs = list(history_cursor)[::-1]
     history_text = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in history_msgs])
 
     # 5. Construct System Prompt based on Mode
     
+    formatting_rules = """
+    FORMATTING RULES:
+    - Use standard Markdown for lists.
+    - For numbered lists, use sequential numbers (1., 2., 3...) not all 1s.
+    - Bold the names of key concepts (e.g., **1. Supervised Learning**).
+    """
+
     if mode == "strict":
         system_instructions = f"""
         You are Chatur AI, a strict academic assistant.
@@ -461,6 +468,8 @@ def chat_endpoint(payload: ChatRequest, user: dict = Depends(get_current_user)):
         1. Answer ONLY using the context provided below.
         2. If the answer is NOT in the context, explicitly state: "I cannot find this information in the uploaded documents."
         3. Do not use general knowledge to answer questions about the document content.
+        
+        {formatting_rules}
         
         CONTEXT FROM DOCUMENTS:
         {context_text}
@@ -480,6 +489,8 @@ def chat_endpoint(payload: ChatRequest, user: dict = Depends(get_current_user)):
         3. Clearly mention if you are answering from general knowledge vs. the documents.
         4. Answer should contain more details about the context which have provided by the user and add external context too.
 
+        {formatting_rules}
+
         CONTEXT FROM DOCUMENTS:
         {context_text}
         
@@ -496,7 +507,7 @@ def chat_endpoint(payload: ChatRequest, user: dict = Depends(get_current_user)):
                 {"role": "user", "content": query}
             ],
             temperature=0.6,
-            max_tokens=2048
+            max_tokens=1500
         )
         answer = completion.choices[0].message.content
     except Exception as e:
